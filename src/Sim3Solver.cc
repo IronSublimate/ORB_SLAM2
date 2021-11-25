@@ -28,7 +28,7 @@
 #include "KeyFrame.h"
 #include "ORBmatcher.h"
 
-#include "Thirdparty/DBoW2/DUtils/Random.h"
+#include <DUtils/Random.h>
 
 namespace ORB_SLAM2
 {
@@ -132,7 +132,7 @@ void Sim3Solver::SetRansacParameters(double probability, int minInliers, int max
     else
         nIterations = ceil(log(1-mRansacProb)/log(1-pow(epsilon,3)));
 
-    mRansacMaxIts = max(1,min(nIterations,mRansacMaxIts));
+    mRansacMaxIts = std::max(1,std::min(nIterations,mRansacMaxIts));
 
     mnIterations = 0;
 }
@@ -214,7 +214,7 @@ cv::Mat Sim3Solver::find(vector<bool> &vbInliers12, int &nInliers)
 
 void Sim3Solver::ComputeCentroid(cv::Mat &P, cv::Mat &Pr, cv::Mat &C)
 {
-    cv::reduce(P,C,1,CV_REDUCE_SUM);
+    cv::reduce(P,C,1,cv::REDUCE_SUM);
     C = C/P.cols;
 
     for(int i=0; i<P.cols; i++)

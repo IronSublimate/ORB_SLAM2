@@ -23,11 +23,13 @@
 #include "ORBmatcher.h"
 #include "Optimizer.h"
 
-#include<mutex>
+#include <mutex>
+#include <unistd.h>
 
 namespace ORB_SLAM2
 {
 
+    using namespace std;
 LocalMapping::LocalMapping(Map *pMap, const float bMonocular):
     mbMonocular(bMonocular), mbResetRequested(false), mbFinishRequested(false), mbFinished(true), mpMap(pMap),
     mbAbortBA(false), mbStopped(false), mbStopRequested(false), mbNotStop(false), mbAcceptKeyFrames(true)

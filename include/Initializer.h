@@ -30,7 +30,7 @@ namespace ORB_SLAM2
 // THIS IS THE INITIALIZER FOR MONOCULAR SLAM. NOT USED IN THE STEREO OR RGBD CASE.
 class Initializer
 {
-    typedef pair<int,int> Match;
+    typedef std::pair<int,int> Match;
 
 public:
 
@@ -73,14 +73,14 @@ private:
 
 
     // Keypoints from Reference Frame (Frame 1)
-    vector<cv::KeyPoint> mvKeys1;
+    std::vector<cv::KeyPoint> mvKeys1;
 
     // Keypoints from Current Frame (Frame 2)
-    vector<cv::KeyPoint> mvKeys2;
+    std::vector<cv::KeyPoint> mvKeys2;
 
     // Current Matches from Reference to Current
-    vector<Match> mvMatches12;
-    vector<bool> mvbMatched1;
+    std::vector<Match> mvMatches12;
+    std::vector<bool> mvbMatched1;
 
     // Calibration
     cv::Mat mK;
@@ -92,7 +92,7 @@ private:
     int mMaxIterations;
 
     // Ransac sets
-    vector<vector<size_t> > mvSets;   
+    std::vector<std::vector<size_t> > mvSets;
 
 };
 

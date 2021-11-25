@@ -28,12 +28,14 @@
 
 #include "ORBmatcher.h"
 
-#include<mutex>
-#include<thread>
+#include <mutex>
+#include <thread>
+#include <unistd.h>
 
 
 namespace ORB_SLAM2
 {
+    using namespace std;
 
 LoopClosing::LoopClosing(Map *pMap, KeyFrameDatabase *pDB, ORBVocabulary *pVoc, const bool bFixScale):
     mbResetRequested(false), mbFinishRequested(false), mbFinished(true), mpMap(pMap),
@@ -89,21 +91,21 @@ void LoopClosing::Run()
 
 void LoopClosing::InsertKeyFrame(KeyFrame *pKF)
 {
-    unique_lock<mutex> lock(mMutexLoopQueue);
+    std::unique_lock<std::mutex> lock(mMutexLoopQueue);
     if(pKF->mnId!=0)
         mlpLoopKeyFrameQueue.push_back(pKF);
 }
 
 bool LoopClosing::CheckNewKeyFrames()
 {
-    unique_lock<mutex> lock(mMutexLoopQueue);
+    std::unique_lock<std::mutex> lock(mMutexLoopQueue);
     return(!mlpLoopKeyFrameQueue.empty());
 }
 
 bool LoopClosing::DetectLoop()
 {
     {
-        unique_lock<mutex> lock(mMutexLoopQueue);
+        std::unique_lock<std::mutex> lock(mMutexLoopQueue);
         mpCurrentKF = mlpLoopKeyFrameQueue.front();
         mlpLoopKeyFrameQueue.pop_front();
         // Avoid that a keyframe can be erased while it is being process by this thread
@@ -161,17 +163,17 @@ bool LoopClosing::DetectLoop()
     {
         KeyFrame* pCandidateKF = vpCandidateKFs[i];
 
-        set<KeyFrame*> spCandidateGroup = pCandidateKF->GetConnectedKeyFrames();
+        std::set<KeyFrame*> spCandidateGroup = pCandidateKF->GetConnectedKeyFrames();
         spCandidateGroup.insert(pCandidateKF);
 
         bool bEnoughConsistent = false;
         bool bConsistentForSomeGroup = false;
         for(size_t iG=0, iendG=mvConsistentGroups.size(); iG<iendG; iG++)
         {
-            set<KeyFrame*> sPreviousGroup = mvConsistentGroups[iG].first;
+            std::set<KeyFrame*> sPreviousGroup = mvConsistentGroups[iG].first;
 
             bool bConsistent = false;
-            for(set<KeyFrame*>::iterator sit=spCandidateGroup.begin(), send=spCandidateGroup.end(); sit!=send;sit++)
+            for(std::set<KeyFrame*>::iterator sit=spCandidateGroup.begin(), send=spCandidateGroup.end(); sit!=send;sit++)
             {
                 if(sPreviousGroup.count(*sit))
                 {
@@ -187,7 +189,7 @@ bool LoopClosing::DetectLoop()
                 int nCurrentConsistency = nPreviousConsistency + 1;
                 if(!vbConsistentGroup[iG])
                 {
-                    ConsistentGroup cg = make_pair(spCandidateGroup,nCurrentConsistency);
+                    ConsistentGroup cg = std::make_pair(spCandidateGroup,nCurrentConsistency);
                     vCurrentConsistentGroups.push_back(cg);
                     vbConsistentGroup[iG]=true; //this avoid to include the same group more than once
                 }
@@ -202,7 +204,7 @@ bool LoopClosing::DetectLoop()
         // If the group is not consistent with any previous group insert with consistency counter set to zero
         if(!bConsistentForSomeGroup)
         {
-            ConsistentGroup cg = make_pair(spCandidateGroup,0);
+            ConsistentGroup cg = std::make_pair(spCandidateGroup,0);
             vCurrentConsistentGroups.push_back(cg);
         }
     }
@@ -401,7 +403,7 @@ bool LoopClosing::ComputeSim3()
 
 void LoopClosing::CorrectLoop()
 {
-    cout << "Loop detected!" << endl;
+    std::cout << "Loop detected!" << std::endl;
 
     // Send a stop signal to Local Mapping
     // Avoid new keyframes are inserted while correcting the loop
@@ -410,10 +412,10 @@ void LoopClosing::CorrectLoop()
     // If a Global Bundle Adjustment is running, abort it
     if(isRunningGBA())
     {
-        unique_lock<mutex> lock(mMutexGBA);
+        std::unique_lock<std::mutex> lock(mMutexGBA);
         mbStopGBA = true;
 
-        mnFullBAIdx++;
+        mnFullBAIdx=true;
 
         if(mpThreadGBA)
         {
@@ -442,7 +444,7 @@ void LoopClosing::CorrectLoop()
 
     {
         // Get Map Mutex
-        unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
+        std::unique_lock<std::mutex> lock(mpMap->mMutexMapUpdate);
 
         for(vector<KeyFrame*>::iterator vit=mvpCurrentConnectedKFs.begin(), vend=mvpCurrentConnectedKFs.end(); vit!=vend; vit++)
         {
@@ -576,7 +578,7 @@ void LoopClosing::CorrectLoop()
     mbRunningGBA = true;
     mbFinishedGBA = false;
     mbStopGBA = false;
-    mpThreadGBA = new thread(&LoopClosing::RunGlobalBundleAdjustment,this,mpCurrentKF->mnId);
+    mpThreadGBA = new std::thread(&LoopClosing::RunGlobalBundleAdjustment,this,mpCurrentKF->mnId);
 
     // Loop closed. Release Local Mapping.
     mpLocalMapper->Release();    
@@ -599,7 +601,7 @@ void LoopClosing::SearchAndFuse(const KeyFrameAndPose &CorrectedPosesMap)
         matcher.Fuse(pKF,cvScw,mvpLoopMapPoints,4,vpReplacePoints);
 
         // Get Map Mutex
-        unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
+        std::unique_lock<std::mutex> lock(mpMap->mMutexMapUpdate);
         const int nLP = mvpLoopMapPoints.size();
         for(int i=0; i<nLP;i++)
         {
@@ -616,14 +618,14 @@ void LoopClosing::SearchAndFuse(const KeyFrameAndPose &CorrectedPosesMap)
 void LoopClosing::RequestReset()
 {
     {
-        unique_lock<mutex> lock(mMutexReset);
+        std::unique_lock<std::mutex> lock(mMutexReset);
         mbResetRequested = true;
     }
 
     while(1)
     {
         {
-        unique_lock<mutex> lock2(mMutexReset);
+        std::unique_lock<std::mutex> lock2(mMutexReset);
         if(!mbResetRequested)
             break;
         }
@@ -633,7 +635,7 @@ void LoopClosing::RequestReset()
 
 void LoopClosing::ResetIfRequested()
 {
-    unique_lock<mutex> lock(mMutexReset);
+    std::unique_lock<std::mutex> lock(mMutexReset);
     if(mbResetRequested)
     {
         mlpLoopKeyFrameQueue.clear();
@@ -644,7 +646,7 @@ void LoopClosing::ResetIfRequested()
 
 void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
 {
-    cout << "Starting Global Bundle Adjustment" << endl;
+    std::cout << "Starting Global Bundle Adjustment" << std::endl;
 
     int idx =  mnFullBAIdx;
     Optimizer::GlobalBundleAdjustemnt(mpMap,10,&mbStopGBA,nLoopKF,false);
@@ -654,14 +656,14 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
     // not included in the Global BA and they are not consistent with the updated map.
     // We need to propagate the correction through the spanning tree
     {
-        unique_lock<mutex> lock(mMutexGBA);
+        std::unique_lock<std::mutex> lock(mMutexGBA);
         if(idx!=mnFullBAIdx)
             return;
 
         if(!mbStopGBA)
         {
-            cout << "Global Bundle Adjustment finished" << endl;
-            cout << "Updating map ..." << endl;
+            std::cout << "Global Bundle Adjustment finished" << std::endl;
+            std::cout << "Updating map ..." << std::endl;
             mpLocalMapper->RequestStop();
             // Wait until Local Mapping has effectively stopped
 
@@ -671,17 +673,17 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
             }
 
             // Get Map Mutex
-            unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
+            std::unique_lock<std::mutex> lock(mpMap->mMutexMapUpdate);
 
             // Correct keyframes starting at map first keyframe
-            list<KeyFrame*> lpKFtoCheck(mpMap->mvpKeyFrameOrigins.begin(),mpMap->mvpKeyFrameOrigins.end());
+            std::list<KeyFrame*> lpKFtoCheck(mpMap->mvpKeyFrameOrigins.begin(),mpMap->mvpKeyFrameOrigins.end());
 
             while(!lpKFtoCheck.empty())
             {
                 KeyFrame* pKF = lpKFtoCheck.front();
-                const set<KeyFrame*> sChilds = pKF->GetChilds();
+                const std::set<KeyFrame*> sChilds = pKF->GetChilds();
                 cv::Mat Twc = pKF->GetPoseInverse();
-                for(set<KeyFrame*>::const_iterator sit=sChilds.begin();sit!=sChilds.end();sit++)
+                for(std::set<KeyFrame*>::const_iterator sit=sChilds.begin();sit!=sChilds.end();sit++)
                 {
                     KeyFrame* pChild = *sit;
                     if(pChild->mnBAGlobalForKF!=nLoopKF)
@@ -740,7 +742,7 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
 
             mpLocalMapper->Release();
 
-            cout << "Map updated!" << endl;
+            std::cout << "Map updated!" << std::endl;
         }
 
         mbFinishedGBA = true;
@@ -750,25 +752,25 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
 
 void LoopClosing::RequestFinish()
 {
-    unique_lock<mutex> lock(mMutexFinish);
+    std::unique_lock<std::mutex> lock(mMutexFinish);
     mbFinishRequested = true;
 }
 
 bool LoopClosing::CheckFinish()
 {
-    unique_lock<mutex> lock(mMutexFinish);
+    std::unique_lock<std::mutex> lock(mMutexFinish);
     return mbFinishRequested;
 }
 
 void LoopClosing::SetFinish()
 {
-    unique_lock<mutex> lock(mMutexFinish);
+    std::unique_lock<std::mutex> lock(mMutexFinish);
     mbFinished = true;
 }
 
 bool LoopClosing::isFinished()
 {
-    unique_lock<mutex> lock(mMutexFinish);
+    std::unique_lock<std::mutex> lock(mMutexFinish);
     return mbFinished;
 }
 

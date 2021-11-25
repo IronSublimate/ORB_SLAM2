@@ -25,7 +25,7 @@
 
 namespace ORB_SLAM2
 {
-
+    using namespace std;
 long unsigned int KeyFrame::nNextId=0;
 
 KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB):

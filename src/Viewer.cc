@@ -22,7 +22,8 @@
 #include <pangolin/pangolin.h>
 
 #include <mutex>
-
+#include <unistd.h>
+using namespace std;
 namespace ORB_SLAM2
 {
 

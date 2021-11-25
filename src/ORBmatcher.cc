@@ -25,9 +25,9 @@
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
 
-#include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
+#include <DBoW2/FeatureVector.h>
 
-#include<stdint-gcc.h>
+#include <cstdint>
 
 using namespace std;
 
@@ -655,7 +655,7 @@ int ORBmatcher::SearchByBoW(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &
 }
 
 int ORBmatcher::SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, cv::Mat F12,
-                                       vector<pair<size_t, size_t> > &vMatchedPairs, const bool bOnlyStereo)
+                                       std::vector<std::pair<size_t, size_t> > &vMatchedPairs, const bool bOnlyStereo)
 {    
     const DBoW2::FeatureVector &vFeatVec1 = pKF1->mFeatVec;
     const DBoW2::FeatureVector &vFeatVec2 = pKF2->mFeatVec;
@@ -674,10 +674,10 @@ int ORBmatcher::SearchForTriangulation(KeyFrame *pKF1, KeyFrame *pKF2, cv::Mat F
     // Compare only ORB that share the same node
 
     int nmatches=0;
-    vector<bool> vbMatched2(pKF2->N,false);
-    vector<int> vMatches12(pKF1->N,-1);
+    std::vector<bool> vbMatched2(pKF2->N,false);
+    std::vector<int> vMatches12(pKF1->N,-1);
 
-    vector<int> rotHist[HISTO_LENGTH];
+    std::vector<int> rotHist[HISTO_LENGTH];
     for(int i=0;i<HISTO_LENGTH;i++)
         rotHist[i].reserve(500);
 

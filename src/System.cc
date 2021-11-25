@@ -25,22 +25,23 @@
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
+#include <unistd.h>
 
 namespace ORB_SLAM2
 {
-
-System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
+using namespace std;
+System::System(const std::string &strVocFile, const std::string &strSettingsFile, const eSensor sensor,
                const bool bUseViewer):mSensor(sensor), mpViewer(static_cast<Viewer*>(NULL)), mbReset(false),mbActivateLocalizationMode(false),
         mbDeactivateLocalizationMode(false)
 {
     // Output welcome message
-    cout << endl <<
+    std::cout << std::endl <<
     "ORB-SLAM2 Copyright (C) 2014-2016 Raul Mur-Artal, University of Zaragoza." << endl <<
-    "This program comes with ABSOLUTELY NO WARRANTY;" << endl  <<
+    "This program comes with ABSOLUTELY NO WARRANTY;" << std::endl  <<
     "This is free software, and you are welcome to redistribute it" << endl <<
     "under certain conditions. See LICENSE.txt." << endl << endl;
 
-    cout << "Input sensor was set to: ";
+    std::cout << "Input sensor was set to: ";
 
     if(mSensor==MONOCULAR)
         cout << "Monocular" << endl;
@@ -249,7 +250,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
 
     // Check reset
     {
-    unique_lock<mutex> lock(mMutexReset);
+        std::unique_lock<std::mutex> lock(mMutexReset);
     if(mbReset)
     {
         mpTracker->Reset();
@@ -294,7 +295,7 @@ bool System::MapChanged()
 
 void System::Reset()
 {
-    unique_lock<mutex> lock(mMutexReset);
+    std::unique_lock<std::mutex> lock(mMutexReset);
     mbReset = true;
 }
 
@@ -319,7 +320,7 @@ void System::Shutdown()
         pangolin::BindToContext("ORB-SLAM2: Map Viewer");
 }
 
-void System::SaveTrajectoryTUM(const string &filename)
+void System::SaveTrajectoryTUM(const std::string &filename)
 {
     cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;
     if(mSensor==MONOCULAR)
@@ -380,7 +381,7 @@ void System::SaveTrajectoryTUM(const string &filename)
 }
 
 
-void System::SaveKeyFrameTrajectoryTUM(const string &filename)
+void System::SaveKeyFrameTrajectoryTUM(const std::string &filename)
 {
     cout << endl << "Saving keyframe trajectory to " << filename << " ..." << endl;
 
@@ -416,7 +417,7 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
     cout << endl << "trajectory saved!" << endl;
 }
 
-void System::SaveTrajectoryKITTI(const string &filename)
+void System::SaveTrajectoryKITTI(const std::string &filename)
 {
     cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;
     if(mSensor==MONOCULAR)

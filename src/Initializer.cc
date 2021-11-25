@@ -20,7 +20,7 @@
 
 #include "Initializer.h"
 
-#include "Thirdparty/DBoW2/DUtils/Random.h"
+#include <DUtils/Random.h>
 
 #include "Optimizer.h"
 #include "ORBmatcher.h"
@@ -29,7 +29,7 @@
 
 namespace ORB_SLAM2
 {
-
+using namespace std;
 Initializer::Initializer(const Frame &ReferenceFrame, float sigma, int iterations)
 {
     mK = ReferenceFrame.mK.clone();
